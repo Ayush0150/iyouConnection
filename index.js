@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 
-/* ================= PORT (Render-safe) ================= */
+/* ✅ Render-safe port */
 const port = process.env.PORT || 8080;
 
 const path = require("path");
@@ -37,14 +37,17 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.locals.appName = APP_NAME;
 
-/* ✅ GLOBAL DEFAULTS (FIXES pageTitle ERROR) */
+/* ✅ GLOBAL EJS DEFAULTS (FIXES ALL ERRORS) */
 app.use((req, res, next) => {
   res.locals.pageTitle = `${APP_NAME} | Connect Freely`;
   res.locals.pageDescription =
-    "Stay connected, share thoughts, and discover people on iyouConnect.";
+    "Stay close to your people, share updates, and discover fresh voices.";
+  res.locals.activePage = "";
+
   const live = getLiveOnlineCount();
   res.locals.liveOnlineCount = live;
   res.locals.liveOnlineCountLabel = live.toLocaleString("en-US");
+
   next();
 });
 
@@ -63,6 +66,8 @@ const createPost = ({
   likes = 0,
   comments = 0,
   tags = [],
+  autoLikeTarget = null,
+  autoLikeProfile = null,
 }) => ({
   id: uuidv4(),
   username,
@@ -75,6 +80,8 @@ const createPost = ({
   likes,
   comments,
   tags,
+  autoLikeTarget,
+  autoLikeProfile,
 });
 
 const getDeveloperPost = () => {
@@ -84,11 +91,12 @@ const getDeveloperPost = () => {
     username: ADMIN_HANDLE,
     displayName: ADMIN_DISPLAY_NAME,
     content: "1st rule of programming: if it works don't touch it.",
-    response: "Dev infra verified. Monitoring queue depth hourly.",
+    response:
+      "Dev infra verified. Monitoring queue depth hourly; ping ops if latency exceeds 220ms.",
     responseAuthor: "@ops.admin",
     likes: 152,
     comments: 312,
-    tags: ["product", "ops"],
+    tags: ["product", "roadmap", "ops"],
   });
 
   return developerPost;
@@ -104,15 +112,16 @@ const rebuildFeed = () => (posts = seedSamplePosts());
 
 /* ================= ROUTES ================= */
 
-/* ✅ ROOT */
+/* ✅ ROOT ROUTE */
 app.get("/", (req, res) => {
   res.redirect("/posts");
 });
 
-/* CREATE NEW POST */
+/* CREATE POST */
 app.get("/posts/new", (req, res) => {
+  res.locals.activePage = "create";
   res.render("new.ejs", {
-    pageTitle: `Create Post | ${APP_NAME}`,
+    pageTitle: `Create a Post | ${APP_NAME}`,
   });
 });
 
@@ -122,7 +131,7 @@ app.post("/posts", (req, res) => {
   const content = req.body.content?.trim();
 
   if (!username || !content) {
-    return res.status(400).send("Username and content required");
+    return res.status(400).send("Username and content are required.");
   }
 
   const newPost = createPost({
@@ -138,41 +147,52 @@ app.post("/posts", (req, res) => {
 
 /* FEED */
 app.get("/posts", (req, res) => {
+  res.locals.activePage = "feed";
+
   rebuildFeed();
   const page = Number(req.query.page || 1);
-  const totalPages = Math.max(
-    1,
-    Math.ceil(posts.length / PAGE_SIZE)
-  );
+  const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
   const start = (page - 1) * PAGE_SIZE;
 
   res.render("index.ejs", {
     posts: posts.slice(start, start + PAGE_SIZE),
     pagination: { currentPage: page, totalPages },
+    pageTitle: `${APP_NAME} Feed`,
   });
 });
 
 /* SHOW POST */
 app.get("/posts/:id", (req, res) => {
+  res.locals.activePage = "feed";
+
   const post = posts.find((p) => p.id === req.params.id);
   if (!post) return res.status(404).send("Post not found");
 
-  res.render("show.ejs", { post });
+  res.render("show.ejs", {
+    post,
+    pageTitle: `${APP_NAME} | Post`,
+  });
 });
 
 /* EDIT POST */
 app.get("/posts/:id/edit", (req, res) => {
+  res.locals.activePage = "create";
+
   const post = posts.find((p) => p.id === req.params.id);
   if (!post) return res.status(404).send("Post not found");
 
-  res.render("edit.ejs", { post });
+  res.render("edit.ejs", {
+    post,
+    pageTitle: `Edit Post | ${APP_NAME}`,
+  });
 });
 
 /* UPDATE POST */
 app.patch("/posts/:id", (req, res) => {
   const post = posts.find((p) => p.id === req.params.id);
   if (!post) return res.status(404).send("Post not found");
-  if (post.isDeveloper) return res.status(403).send("Locked");
+  if (post.isDeveloper)
+    return res.status(403).send("Developer posts are locked");
 
   post.content = req.body.content;
   rebuildFeed();
