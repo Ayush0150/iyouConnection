@@ -1,17 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Post in Detail</title>
-    <link rel="stylesheet" href="/style.css">
+    <%- include("partials/head") %>
   </head>
-  <body>
-    <h2>Here ia your post in detail</h2>
-    <p>Post id: <%=post.id%></p>
-    <div class="post">
-      <h3 class="user"><%=post.username%></h3>
-      <h4><%=post.content%></h4>
+  <body class="shell">
+    <div class="grid-highlight" aria-hidden="true"></div>
+    <div class="page">
+      <%- include("partials/header", { activePage }) %>
+
+      <main class="main">
+        <% if (!post) { %>
+        <section class="empty-state">
+          <p>Post not found</p>
+          <span>The story you are looking for was removed or never existed.</span>
+          <a class="btn primary" href="/posts">Back to feed</a>
+        </section>
+        <% } else { %>
+        <section class="detail-layout">
+          <article class="detail-card <%= post.isDeveloper ? "locked" : "" %>">
+            <header>
+              <div class="avatar xl <%= post.isDeveloper ? "developer" : "" %>">
+                <img
+                  src="<%= post.isDeveloper ? "/developer.jpg" : "/avatar-default.svg" %>"
+                  alt="Avatar for @<%= post.username %>"
+                />
+              </div>
+              <div class="post-author">
+                <p class="handle"><%= post.displayLabel %></p>
+                <p class="meta">@<%= post.username %> · <%= post.isDeveloper ? "Admin" : "Member" %></p>
+                <% if (post.isDeveloper) { %>
+                <button
+                  type="button"
+                  class="presence-toggle"
+                  data-admin-presence
+                  data-active-duration="1200000"
+                  data-offline-duration="1800000"
+                  aria-pressed="true"
+                >
+                  Active
+                </button>
+                <% } %>
+              </div>
+            </header>
+            <% if (post.isDeveloper) { %>
+            <div class="chip developer">Developer</div>
+            <p class="locked-note">Only @<%= post.username %> can update this thread.</p>
+            <% } %>
+            <div class="post-body">
+              <p class="post-text"><%= post.content %></p>
+              <% if (post.tags && post.tags.length) { %>
+              <div class="post-tags" role="list">
+                <% post.tags.forEach((tag) => { %>
+                <span class="chip soft hash" role="listitem">#<%= tag %></span>
+                <% }) %>
+              </div>
+              <% } %>
+            </div>
+
+            <footer class="detail-footer">
+              <div class="detail-actions" aria-label="Post metadata">
+                <div class="post-stats">
+                  <button
+                    class="action-chip"
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    data-count="<%= post.likes %>"
+                    <% if (post.isDeveloper) { %> data-admin-like="true" <% } %>
+                  >
+                    <span aria-hidden="true">❤</span>
+                    <span data-count-value><%= post.likesDisplay %></span>
+                  </button>
+                </div>
+                <div class="post-meta-bar">
+                  <time class="time-pill solid" datetime="<%= post.createdAt %>">
+                    <%= post.relativeTime %>
+                  </time>
+                  <span class="meta">• ~<%= post.readingMinutes %> min read</span>
+                </div>
+              </div>
+
+              <div class="detail-controls">
+                <a class="btn ghost" href="/posts">Back to feed</a>
+                <% if (!post.isDeveloper) { %>
+                <a class="btn primary" href="/posts/<%= post.id %>/edit">Edit</a>
+                <form
+                  method="post"
+                  action="/posts/<%= post.id %>?_method=DELETE"
+                  class="inline-form"
+                >
+                  <button class="btn ghost" type="submit">Delete</button>
+                </form>
+                <% } %>
+              </div>
+            </footer>
+          </article>
+          <aside class="detail-meta">
+            <p class="eyebrow">Details</p>
+            <div class="meta-grid">
+              <div>
+                <p class="meta-label">Post ID</p>
+                <p class="meta"><%= post.id %></p>
+              </div>
+              <div>
+                <p class="meta-label">Status</p>
+                <p class="meta"><%= post.isDeveloper ? "Locked" : "Editable" %></p>
+              </div>
+            </div>
+            <ul class="detail-facts">
+              <li>Ops desk reviews queue depth every 15 minutes.</li>
+              <li>Admin replies average 11 minutes when tagged directly.</li>
+              <li>Most readers finish in <%= post.readingMinutes %> min.</li>
+            </ul>
+          </aside>
+        </section>
+        <% } %>
+      </main>
+
+      <%- include("partials/footer") %>
     </div>
   </body>
 </html>

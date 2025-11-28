@@ -1,0 +1,47 @@
+<header class="site-header">
+  <div class="header-glow" aria-hidden="true"></div>
+  <a class="brand" href="/posts" aria-label="iyouConnect home">
+    <img src="/logo.svg" alt="iyouConnect logo" width="40" height="40" />
+    <div>
+      <p class="brand-label"><%= appName || "iyouConnect" %></p>
+      <p class="brand-tagline">Share. Grow. Stay close.</p>
+    </div>
+    <span class="brand-pill">Live Beta</span>
+  </a>
+  <nav class="primary-nav" aria-label="Primary">
+    <% const navItems = [
+      { href: "/posts", label: "Feed", key: "feed" },
+      { href: "/posts/new", label: "Create", key: "create" },
+      { href: "#insights", label: "Insights", key: "insights" },
+      { href: "#community", label: "Community", key: "community" }
+    ]; %>
+    <ul>
+      <% navItems.forEach((item) => { %>
+        <li>
+          <a
+            href="<%= item.href %>"
+            class="nav-link <%= activePage === item.key ? "is-active" : "" %>"
+            aria-current="<%= activePage === item.key ? "page" : "false" %>"
+          >
+            <%= item.label %>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+  </nav>
+  <div class="header-actions">
+    <div
+      class="live-indicator"
+      aria-live="polite"
+      data-live-indicator
+      data-live-count="<%= liveOnlineCount || 3820 %>"
+      data-live-base="<%= liveOnlineBase || 3820 %>"
+      data-live-variance="<%= liveOnlineVariance || 90 %>"
+    >
+      <span class="status-dot"></span>
+      <span class="status-label"><%= (liveOnlineCountLabel || "3,820") + " online" %></span>
+    </div>
+    <a class="btn outline" href="#composer">Quick Post</a>
+    <a class="btn primary" href="/posts/new">Launch Studio</a>
+  </div>
+</header>

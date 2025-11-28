@@ -1,36 +1,371 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>All Post</title>
-    <link
-      rel="icon"
-      href="//qsf.fs.quoracdn.net/-4-ans_frontend_assets.favicon-new.ico-26-e7e93fe0a7fbc991.ico"
-    />
-    <link rel="stylesheet" href="/style.css" />
-    <meta http-equiv="refresh" content="2">
-
+    <%- include("partials/head") %>
   </head>
-  <body>
-    <h1>Quora Posts</h1>
-    <%for(let post of posts) {%>
-    <div class="post">
-      <hr />
-      <h3 class="user">@<%=post.username%></h3>
-      <h4 class="content"><%=post.content%></h4>
+  <body class="shell">
+    <div class="grid-highlight" aria-hidden="true"></div>
+    <div class="page">
+      <%- include("partials/header", { activePage }) %>
 
-      <a href="/posts/<%=post.id%>">See in Detail</a>
-      &nbsp;
-      <a href="/posts/<%=post.id%>/edit">Edit</a>
-      &nbsp;
-      <form method="post" action="/posts/<%=post.id%>?_method=DELETE">
-        <button>Delete Post</button>
-      </form>
-      <hr />
+      <main class="main">
+        <% const systemCards = [
+          {
+            title: "Signal board",
+            body: "Capture wins, blockers, and shoutouts in one card stack.",
+            bullets: ["Launch recap", "Daily standup", "Quick ask"],
+          },
+          {
+            title: "Calm cadence",
+            body: "Short-form updates keep context high and noise low.",
+            bullets: ["90-sec limit", "Smart routing", "Mobile ready"],
+          },
+          {
+            title: "Access control",
+            body: "Pin trusted editors or lock threads when needed.",
+            bullets: ["Role based", "Soft locks", "Status alerts"],
+          },
+        ];
+        const uniqueTags = Array.from(
+          new Set(
+            (posts || []).flatMap((post) =>
+              (post.tags || []).map((tag) => tag.toLowerCase())
+            )
+          )
+        ).filter(Boolean);
+        const feedFilters = [
+          { value: "all", label: "All updates" },
+          ...uniqueTags.map((tag) => ({
+            value: tag,
+            label: tag.charAt(0).toUpperCase() + tag.slice(1),
+          })),
+        ]; %>
+
+        <section class="hero hero-premium hero-balanced">
+          <div class="hero-content">
+            <div class="hero-badge">Precision social OS</div>
+            <h1>
+              Keep updates intentional on
+              <span><%= appName || "iyouConnect" %></span>.
+            </h1>
+            <p>
+              A single view for teams to broadcast progress, respond fast, and
+              stay calm across every device.
+            </p>
+            <div class="hero-actions">
+              <a class="btn primary" href="#composer">Write update</a>
+              <a class="btn outline" href="/posts/new">Open studio</a>
+            </div>
+            <ul class="hero-points">
+              <li>Responsive layouts that adapt instantly.</li>
+              <li>Clean typography and balanced spacing.</li>
+              <li>Respectful motion for every interaction.</li>
+            </ul>
+          </div>
+          <div class="hero-showcase hero-stack" aria-live="polite">
+            <article class="showcase-card">
+              <p class="eyebrow">Now shipping</p>
+              <h3>Unified composer</h3>
+              <p class="meta">Draft on desktop, finish on mobile. Styles stay in sync.</p>
+            </article>
+            <article class="showcase-card developer-card">
+              <p class="eyebrow">Featured developer</p>
+              <h3>Ayush Rai</h3>
+              <p class="meta">Content locked to keep source-of-truth updates pristine.</p>
+              <span class="chip developer">Developer</span>
+            </article>
+            <div class="orb orb-one"></div>
+            <div class="orb orb-two"></div>
+          </div>
+        </section>
+
+        <section class="metrics metrics-compact" id="insights">
+          <div class="metrics-grid">
+            <% (metrics || []).forEach((metric) => { %>
+            <article
+              class="metric-card"
+              data-stat-card
+              data-stat-key="<%= metric.key %>"
+              data-stat-base="<%= metric.base %>"
+              data-stat-variance="<%= metric.variance %>"
+              data-stat-format="<%= metric.format %>"
+              data-stat-value="<%= metric.rawValue %>"
+            >
+              <p class="eyebrow"><%= metric.label %></p>
+              <p class="metric-value" data-stat-value><%= metric.displayValue %></p>
+              <p class="meta"><%= metric.detail %></p>
+            </article>
+            <% }) %>
+          </div>
+        </section>
+
+        <section class="system-grid" aria-label="Product pillars">
+          <% systemCards.forEach((card) => { %>
+          <article class="system-card card">
+            <header>
+              <p class="eyebrow"><%= card.title %></p>
+              <p><%= card.body %></p>
+            </header>
+            <ul>
+              <% card.bullets.forEach((point) => { %>
+              <li><%= point %></li>
+              <% }) %>
+            </ul>
+          </article>
+          <% }) %>
+        </section>
+
+        <section class="composer" id="composer">
+          <div class="card composer-card">
+            <div class="card-heading">
+              <p>Quick composer</p>
+              <span>Everything autosaves and stays aligned with the component system.</span>
+            </div>
+            <form method="post" action="/posts" class="composer-form">
+              <label class="field">
+                <span>Display name</span>
+                <input
+                  type="text"
+                  name="username"
+                  placeholder="e.g. team.arc"
+                  required
+                  maxlength="40"
+                />
+              </label>
+              <label class="field">
+                <span>Post</span>
+                <textarea
+                  name="content"
+                  rows="4"
+                  placeholder="Share context, a decision, or a next step."
+                  required
+                  maxlength="320"
+                ></textarea>
+              </label>
+              <div class="composer-options">
+                <p>Tag it</p>
+                <div class="chip-group" role="list">
+                  <span class="chip soft">Update</span>
+                  <span class="chip soft">Question</span>
+                  <span class="chip soft">Celebrate</span>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn primary" type="submit">Publish</button>
+                <a class="btn ghost" href="/posts/new">Full screen studio</a>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section class="feed" aria-live="polite" data-feed>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Live feed</p>
+              <h2>Clean, lightweight cards</h2>
+            </div>
+            <a class="btn outline" href="/posts/new">Plan drop</a>
+          </div>
+
+          <div class="feed-toolbar">
+            <div class="live-pill" aria-label="Live presence">
+              <span class="dot"></span>
+              <span>
+                <%= (liveOnlineCountLabel || "3,800") + " active viewers" %>
+              </span>
+            </div>
+            <div class="toolbar-controls">
+              <div class="chip-group filter-chips" role="list">
+                <% feedFilters.forEach((filter, index) => { %>
+                <button
+                  class="chip soft"
+                  type="button"
+                  data-feed-filter="<%= filter.value %>"
+                  aria-pressed="<%= index === 0 ? "true" : "false" %>"
+                >
+                  <%= filter.label %>
+                </button>
+                <% }) %>
+              </div>
+              <div class="toolbar-select">
+                <label for="feed-sort" class="sr-only">Sort feed</label>
+                <select id="feed-sort" name="sort" data-feed-sort>
+                  <option value="trending">Trending</option>
+                  <option value="recent">Most recent</option>
+                  <option value="chronological">Chronological</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <p class="feed-status" data-feed-status aria-live="polite">
+            <span data-feed-default>
+              Showing
+              <span data-feed-count><%= (posts && posts.length) || 0 %></span>
+              <span data-feed-label><%= (posts && posts.length === 1)
+                  ? "update"
+                  : "updates" %></span>
+            </span>
+            <span data-feed-empty hidden>No updates match that filter.</span>
+          </p>
+
+          <div class="feed-skeleton" data-skeleton aria-hidden="true">
+            <% for (let i = 0; i < 3; i += 1) { %>
+            <article class="post-card skeleton-card">
+              <div class="skeleton-row w-40"></div>
+              <div class="skeleton-avatar-row">
+                <div class="skeleton-avatar"></div>
+                <div class="skeleton-column">
+                  <div class="skeleton-row w-60"></div>
+                  <div class="skeleton-row w-30"></div>
+                </div>
+              </div>
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row w-80"></div>
+              <div class="skeleton-row w-50"></div>
+            </article>
+            <% } %>
+          </div>
+
+          <% if (!posts || posts.length === 0) { %>
+          <div class="empty-state">
+            <p>No posts yet</p>
+            <span>Share something short. The feed recalibrates instantly.</span>
+            <a class="btn primary" href="/posts/new">Write a post</a>
+          </div>
+          <% } else { %>
+          <div class="feed-list" data-feed-cards aria-busy="true">
+            <% posts.forEach((post, index) => {
+              const persona = post.autoLikeProfile || {};
+            %>
+            <article
+              class="post-card <%= post.isDeveloper ? "locked" : "" %>"
+              style="--card-delay:<%= index * 60 %>ms"
+              data-feed-card
+              data-tags="<%= (post.tags || [])
+                .map((tag) => tag.toLowerCase())
+                .join(",") %>"
+              data-created="<%= post.createdAt %>"
+              data-likes="<%= post.likes %>"
+              data-like-target="<%= post.autoLikeTarget === null ? "" : post.autoLikeTarget %>"
+              data-like-interval-min="<%= persona.intervalMin || "" %>"
+              data-like-interval-max="<%= persona.intervalMax || "" %>"
+              data-like-step-min="<%= persona.stepMin || "" %>"
+              data-like-step-max="<%= persona.stepMax || "" %>"
+              data-like-idle-chance="<%= persona.idleChance || "" %>"
+              data-owner="<%= post.username %>"
+              data-can-manage="<%= post.canManage %>"
+              aria-hidden="false"
+            >
+              <div class="post-ribbon">
+                <span class="chip soft">Signal</span>
+                <span class="time-pill"><%= post.displayDate %></span>
+              </div>
+              <header>
+                <div class="avatar <%= post.isDeveloper ? "developer" : "" %>">
+                  <img
+                    src="<%= post.isDeveloper ? "/developer.jpg" : "/avatar-default.svg" %>"
+                    alt="Avatar for @<%= post.username %>"
+                    loading="lazy"
+                  />
+                </div>
+                <div class="post-author">
+                  <p class="handle"><%= post.displayLabel %></p>
+                  <p class="meta">@<%= post.username %> · <%= post.isDeveloper ? "Admin" : "Member" %></p>
+                  <% if (post.isDeveloper) { %>
+                  <button
+                    type="button"
+                    class="presence-toggle"
+                    data-admin-presence
+                    data-active-duration="1200000"
+                    data-offline-duration="1800000"
+                    aria-pressed="true"
+                  >
+                    Active
+                  </button>
+                  <% } %>
+                </div>
+              </header>
+              <div class="post-body">
+                <p class="post-text"><%= post.content %></p>
+                <% if (post.tags && post.tags.length) { %>
+                <div class="post-tags" role="list">
+                  <% post.tags.forEach((tag) => { %>
+                  <span class="chip soft hash" role="listitem">#<%= tag %></span>
+                  <% }) %>
+                </div>
+                <% } %>
+              </div>
+
+              <footer class="post-footer">
+                <div class="post-actions" aria-label="Post engagement">
+                  <div class="post-stats">
+                    <button
+                      class="action-chip"
+                      type="button"
+                      data-count="<%= post.likes %>"
+                      aria-label="Like update from @<%= post.username %>"
+                      aria-pressed="false"
+                      <% if (!post.isDeveloper) { %>
+                      data-action="like"
+                      <% } %>
+                      <% if (post.isDeveloper) { %>
+                      data-admin-like="true"
+                      disabled
+                      aria-disabled="true"
+                      <% } %>
+                      <% if (!post.isDeveloper) { %>
+                      data-like-target="<%= post.autoLikeTarget %>"
+                      data-like-interval-min="<%= persona.intervalMin || "" %>"
+                      data-like-interval-max="<%= persona.intervalMax || "" %>"
+                      data-like-step-min="<%= persona.stepMin || "" %>"
+                      data-like-step-max="<%= persona.stepMax || "" %>"
+                      data-like-idle-chance="<%= persona.idleChance || "" %>"
+                      <% } %>
+                    >
+                      <span aria-hidden="true">❤</span>
+                      <span data-count-value aria-live="polite"><%= post.likesDisplay %></span>
+                    </button>
+                  </div>
+
+                  <div class="post-meta-bar" aria-label="Reading metadata">
+                    <time class="time-pill solid" datetime="<%= post.createdAt %>">
+                      <%= post.relativeTime %>
+                    </time>
+                    <span class="meta">• ~<%= post.readingMinutes %> min read</span>
+                  </div>
+                </div>
+
+                <div class="post-manage" role="group" aria-label="Post controls">
+                  <a class="btn ghost" href="/posts/<%= post.id %>">View</a>
+                  <% if (post.canManage) { %>
+                  <a class="btn ghost" href="/posts/<%= post.id %>/edit">Edit</a>
+                  <form
+                    method="post"
+                    action="/posts/<%= post.id %>?_method=DELETE"
+                    class="inline-form"
+                  >
+                    <button class="btn ghost" type="submit" aria-label="Delete post">
+                      Delete
+                    </button>
+                  </form>
+                  <% } else { %>
+                  <span class="lock-placeholder" aria-hidden="true">Locked</span>
+                  <span class="lock-placeholder" aria-hidden="true">Locked</span>
+                  <% } %>
+                </div>
+                <% if (post.isDeveloper) { %>
+                <span class="locked-note">Thread locked by admin</span>
+                <% } %>
+              </footer>
+            </article>
+            <% }) %>
+          </div>
+          <% } %>
+        </section>
+      </main>
+
+      <%- include("partials/footer") %>
     </div>
-    <%}%>
-    <br />
-    <a href="/posts/new">Create New Post</a>
   </body>
 </html>

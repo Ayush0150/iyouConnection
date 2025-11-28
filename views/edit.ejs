@@ -1,18 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Edit Post</title>
+    <%- include("partials/head") %>
   </head>
-  <body>
-    <h2>Edit your post</h2>
+  <body class="shell">
+    <div class="grid-highlight" aria-hidden="true"></div>
+    <div class="page">
+      <%- include("partials/header", { activePage }) %>
 
-    <p>Post id: <%=post.id%></p>
-    <p>Post username: @<%=post.username%></p>
-    <form method="post" action="/posts/<%=post.id%>?_method=PATCH">
-      <textarea rows="10" cols="35" name="content"><%=post.content%></textarea>
-      <button>Submit</button>
-    </form>
+      <main class="main">
+        <% if (!post) { %>
+        <section class="empty-state">
+          <p>Post not found</p>
+          <span>Looks like this post has been removed.</span>
+          <a class="btn primary" href="/posts">Return home</a>
+        </section>
+        <% } else if (post.isDeveloper) { %>
+        <section class="empty-state">
+          <p>Editing disabled</p>
+          <span>
+            Developer posts like @<%= post.username %> are locked to preserve
+            the official record.
+          </span>
+          <a class="btn primary" href="/posts/<%= post.id %>">View post</a>
+        </section>
+        <% } else { %>
+        <section class="studio-grid">
+          <div class="studio-panel">
+            <p class="eyebrow">Edit</p>
+            <h2>Refresh the update.</h2>
+            <p>
+              Clarify what changed and keep the tone concise for mobile readers.
+            </p>
+            <a class="link" href="/posts/<%= post.id %>">Back to post</a>
+          </div>
+
+          <div class="card form-card">
+            <form
+              method="post"
+              action="/posts/<%= post.id %>?_method=PATCH"
+              class="stack"
+            >
+              <label class="field">
+                <span>Display name</span>
+                <input type="text" value="@<%= post.username %>" disabled />
+              </label>
+
+              <label class="field">
+                <span>Message</span>
+                <textarea name="content" rows="6" maxlength="600" required>
+<%= post.content %></textarea
+                >
+              </label>
+
+              <div class="composer-options">
+                <p>Remind readers about</p>
+                <div class="chip-group">
+                  <span class="chip soft">Timeline</span>
+                  <span class="chip soft">Dependency</span>
+                  <span class="chip soft">Win</span>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn primary" type="submit">Save changes</button>
+                <a class="btn ghost" href="/posts/<%= post.id %>">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </section>
+        <% } %>
+      </main>
+    </div>
   </body>
 </html>

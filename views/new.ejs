@@ -1,18 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Create New Post</title>
+    <%- include("partials/head") %>
   </head>
-  <body>
-    <h2>Submit Your Post</h2>
-    <form method="post" action="/posts">
-      <input type="text" placeholder="enter username" name="username" />
-      <br /><br />
-      <textarea name="content" placeholder="write your post"></textarea>
-      <br />
-      <button>Submit Post</button>
-    </form>
+  <body class="shell">
+    <div class="grid-highlight" aria-hidden="true"></div>
+    <div class="page">
+      <%- include("partials/header", { activePage }) %>
+
+      <main class="main">
+        <section class="studio-hero">
+          <div>
+            <p class="eyebrow">Creator studio</p>
+            <h1>Compose fast, stay precise.</h1>
+            <p>
+              Short structured inputs keep your feed balanced and easy to scan.
+            </p>
+          </div>
+          <ul class="studio-steps">
+            <li>1. Give the update a title.</li>
+            <li>2. Add context or a question.</li>
+            <li>3. Tag it so the right people see it.</li>
+          </ul>
+        </section>
+
+        <section class="studio-grid">
+          <div class="studio-panel">
+            <p class="eyebrow">Guide</p>
+            <h2>Focus on clarity.</h2>
+            <ul class="tip-list">
+              <li>Lead with the decision or request.</li>
+              <li>Keep paragraphs small for mobile.</li>
+              <li>Set an expected follow-up.</li>
+            </ul>
+            <a class="link" href="/posts">Back to feed</a>
+          </div>
+
+          <div class="card form-card">
+            <form method="post" action="/posts" class="stack">
+              <div class="form-heading">
+                <p>Post details</p>
+                <span
+                  >All components respond automatically on every device.</span
+                >
+              </div>
+              <label class="field">
+                <span>Display name</span>
+                <input
+                  type="text"
+                  name="username"
+                  placeholder="@product.circle"
+                  maxlength="40"
+                  required
+                />
+              </label>
+
+              <label class="field">
+                <span>Message</span>
+                <textarea
+                  name="content"
+                  rows="6"
+                  placeholder="Share the update, include context, or list next steps."
+                  maxlength="600"
+                  required
+                ></textarea>
+              </label>
+
+              <div class="composer-options">
+                <p>Tag</p>
+                <div class="chip-group">
+                  <span class="chip soft">Progress</span>
+                  <span class="chip soft">Decision</span>
+                  <span class="chip soft">Help</span>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn primary" type="submit">Publish</button>
+                <a class="btn ghost" href="/posts">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </section>
+      </main>
+
+      <%- include("partials/footer") %>
+    </div>
   </body>
 </html>
