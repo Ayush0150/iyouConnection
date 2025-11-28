@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 
-/* ✅ Render-safe port */
+/* ================= PORT (RENDER SAFE) ================= */
 const port = process.env.PORT || 8080;
 
 const path = require("path");
@@ -35,18 +35,25 @@ app.use(methodOverride("_method"));
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+
 app.locals.appName = APP_NAME;
 
-/* ✅ GLOBAL EJS DEFAULTS (FIXES ALL ERRORS) */
+/* ✅ GLOBAL EJS-SAFE LOCALS (CRITICAL FIX) */
 app.use((req, res, next) => {
+  // SEO defaults
   res.locals.pageTitle = `${APP_NAME} | Connect Freely`;
   res.locals.pageDescription =
     "Stay close to your people, share updates, and discover fresh voices.";
+
+  // Navbar / header
   res.locals.activePage = "";
 
+  // Live indicator (USED BY header.ejs)
   const live = getLiveOnlineCount();
   res.locals.liveOnlineCount = live;
   res.locals.liveOnlineCountLabel = live.toLocaleString("en-US");
+  res.locals.liveOnlineBase = LIVE_ONLINE_BASE;
+  res.locals.liveOnlineVariance = LIVE_ONLINE_VARIANCE;
 
   next();
 });
@@ -66,8 +73,6 @@ const createPost = ({
   likes = 0,
   comments = 0,
   tags = [],
-  autoLikeTarget = null,
-  autoLikeProfile = null,
 }) => ({
   id: uuidv4(),
   username,
@@ -80,10 +85,9 @@ const createPost = ({
   likes,
   comments,
   tags,
-  autoLikeTarget,
-  autoLikeProfile,
 });
 
+/* ================= SEED DATA ================= */
 const getDeveloperPost = () => {
   if (developerPost) return developerPost;
 
@@ -112,20 +116,37 @@ const rebuildFeed = () => (posts = seedSamplePosts());
 
 /* ================= ROUTES ================= */
 
-/* ✅ ROOT ROUTE */
+/* ✅ ROOT */
 app.get("/", (req, res) => {
   res.redirect("/posts");
 });
 
-/* CREATE POST */
+/* ✅ FEED */
+app.get("/posts", (req, res) => {
+  res.locals.activePage = "feed";
+
+  rebuildFeed();
+  const page = Number(req.query.page || 1);
+  const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+  const start = (page - 1) * PAGE_SIZE;
+
+  res.render("index.ejs", {
+    posts: posts.slice(start, start + PAGE_SIZE),
+    pagination: { currentPage: page, totalPages },
+    pageTitle: `${APP_NAME} Feed`,
+  });
+});
+
+/* ✅ NEW POST */
 app.get("/posts/new", (req, res) => {
   res.locals.activePage = "create";
+
   res.render("new.ejs", {
     pageTitle: `Create a Post | ${APP_NAME}`,
   });
 });
 
-/* SAVE POST */
+/* ✅ CREATE POST */
 app.post("/posts", (req, res) => {
   const username = req.body.username?.trim();
   const content = req.body.content?.trim();
@@ -145,23 +166,7 @@ app.post("/posts", (req, res) => {
   res.redirect("/posts");
 });
 
-/* FEED */
-app.get("/posts", (req, res) => {
-  res.locals.activePage = "feed";
-
-  rebuildFeed();
-  const page = Number(req.query.page || 1);
-  const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
-  const start = (page - 1) * PAGE_SIZE;
-
-  res.render("index.ejs", {
-    posts: posts.slice(start, start + PAGE_SIZE),
-    pagination: { currentPage: page, totalPages },
-    pageTitle: `${APP_NAME} Feed`,
-  });
-});
-
-/* SHOW POST */
+/* ✅ SHOW POST */
 app.get("/posts/:id", (req, res) => {
   res.locals.activePage = "feed";
 
@@ -174,7 +179,7 @@ app.get("/posts/:id", (req, res) => {
   });
 });
 
-/* EDIT POST */
+/* ✅ EDIT POST */
 app.get("/posts/:id/edit", (req, res) => {
   res.locals.activePage = "create";
 
@@ -187,7 +192,7 @@ app.get("/posts/:id/edit", (req, res) => {
   });
 });
 
-/* UPDATE POST */
+/* ✅ UPDATE POST */
 app.patch("/posts/:id", (req, res) => {
   const post = posts.find((p) => p.id === req.params.id);
   if (!post) return res.status(404).send("Post not found");
@@ -199,7 +204,7 @@ app.patch("/posts/:id", (req, res) => {
   res.redirect("/posts");
 });
 
-/* DELETE POST */
+/* ✅ DELETE POST */
 app.delete("/posts/:id", (req, res) => {
   userGeneratedPosts = userGeneratedPosts.filter(
     (p) => p.id !== req.params.id
