@@ -18,15 +18,62 @@ const LIVE_ONLINE_BASE = 125;
 const LIVE_ONLINE_VARIANCE = 25;
 const PAGE_SIZE = 12;
 
+const METRIC_DEFINITIONS = [
+  {
+    key: "pods",
+    label: "Active pods",
+    detail: "Focused rooms",
+    base: 32,
+    variance: 18,
+    format: "number",
+  },
+  {
+    key: "briefs",
+    label: "New briefs",
+    detail: "Past 24h",
+    base: 22,
+    variance: 8,
+    format: "number",
+  },
+  {
+    key: "response",
+    label: "Avg. response",
+    detail: "Across threads",
+    base: 115,
+    variance: 25,
+    format: "duration",
+  },
+];
+
 /* ================= HELPERS ================= */
 const normalizeHandle = (value = "") =>
   value.toString().trim().replace(/^@+/, "").toLowerCase();
 
-const randomShift = (v) =>
-  Math.floor(Math.random() * (v * 2 + 1)) - v;
+const randomShift = (v) => Math.floor(Math.random() * (v * 2 + 1)) - v;
 
 const getLiveOnlineCount = () =>
   Math.max(0, LIVE_ONLINE_BASE + randomShift(LIVE_ONLINE_VARIANCE));
+
+const formatDuration = (seconds) => {
+  const safe = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(safe / 60);
+  const rem = safe % 60;
+  if (minutes <= 0) return `${rem}s`;
+  return `${minutes}m ${rem.toString().padStart(2, "0")}s`;
+};
+
+const formatMetricValue = (value, format) =>
+  format === "duration" ? formatDuration(value) : value.toLocaleString("en-US");
+
+const createMetricSnapshots = () =>
+  METRIC_DEFINITIONS.map((metric) => {
+    const rawValue = Math.max(0, metric.base + randomShift(metric.variance));
+    return {
+      ...metric,
+      rawValue,
+      displayValue: formatMetricValue(rawValue, metric.format),
+    };
+  });
 
 /* ================= MIDDLEWARE ================= */
 app.use(express.urlencoded({ extended: true }));
@@ -129,11 +176,15 @@ app.get("/posts", (req, res) => {
   const page = Number(req.query.page || 1);
   const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
   const start = (page - 1) * PAGE_SIZE;
+  const metrics = createMetricSnapshots();
 
   res.render("index.ejs", {
     posts: posts.slice(start, start + PAGE_SIZE),
+    metrics,
     pagination: { currentPage: page, totalPages },
     pageTitle: `${APP_NAME} Feed`,
+    pageDescription:
+      "Stay close to your people, share updates, and discover fresh voices on a calm, modern feed.",
   });
 });
 
@@ -206,9 +257,7 @@ app.patch("/posts/:id", (req, res) => {
 
 /* ✅ DELETE POST */
 app.delete("/posts/:id", (req, res) => {
-  userGeneratedPosts = userGeneratedPosts.filter(
-    (p) => p.id !== req.params.id
-  );
+  userGeneratedPosts = userGeneratedPosts.filter((p) => p.id !== req.params.id);
   rebuildFeed();
   res.redirect("/posts");
 });
